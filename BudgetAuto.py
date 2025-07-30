@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 import re
+import os
 
 app = Flask(__name__)
 
@@ -19,9 +20,6 @@ def extract_info(text):
     boat_size = size_match.group(0) if size_match else None
 
     # ---------- Dates ----------
-    # Spanish: del 5 al 10 de agosto
-    # English: from 5 to 10 august
-    # French: du 5 au 10 août
     date_patterns = [
         r"del\s\d{1,2}\s(?:al|-)\s\d{1,2}\sde\s[a-z]+",     # Spanish
         r"from\s\d{1,2}\s(?:to|-)\s\d{1,2}\s[a-z]+",        # English
@@ -52,5 +50,7 @@ def parse():
     result = extract_info(content)
     return jsonify(result)
 
+# ✅ This must come LAST — and only run when hosted
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
