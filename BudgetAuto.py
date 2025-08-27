@@ -1,9 +1,6 @@
 from flask import Flask, request, jsonify
 import math, os
 
-# ------------------------------
-# Pricing engine (your code)
-# ------------------------------
 class MarinaRates:
     def __init__(self, rates_table):
         self.rates_table = rates_table
@@ -31,7 +28,7 @@ class MarinaRates:
             effective_length = next((l for l in available_lengths if l >= math.ceil(length)),
                                     max(length, 7))
 
-        # Vessels >35 meters use dynamic calculation
+        
         if effective_length > 35 and beam is not None:
             fixed_percentage = self.get_fixed_percentage(days)
             base_price = fixed_percentage * effective_length * beam * days
@@ -71,7 +68,7 @@ class MarinaRates:
         if vessel_type:
             vessel_type = vessel_type.lower()
 
-        # T0 only for these cases
+        
         if (vessel_type in ["monohull", "catamaran"] and length >= 12) or \
            (vessel_type == "motorboat" and length >= 9):
             if stay_type == "short":
@@ -79,14 +76,14 @@ class MarinaRates:
             else:
                 T0 = length * beam * 9.12
 
-        # T5 for all vessels
+      
         if length < 12:
             if stay_type == "short":
                 T5 = length * beam * days * 0.186
             else:
                 T5 = length * beam * days * 0.124
         else:
-            T5 = length * beam * days * 0.0397  # same for short/long here
+            T5 = length * beam * days * 0.0397  
 
         return {"T0": round(T0, 2), "T5": round(T5, 2)}
 
@@ -126,9 +123,7 @@ rates_table_no_vat = {
                20: 8483.47, 25: 11322.31, 30: 14235.54, 35: 16528.93}
 }
 
-# ------------------------------
-# Flask app + routes for n8n
-# ------------------------------
+
 app = Flask(__name__)
 marina_rates = MarinaRates(rates_table_no_vat)
 
@@ -146,9 +141,9 @@ def estimate():
         days   = int(data.get("days") or 0)
         vessel_type = (data.get("vessel_type") or "monohull").strip().lower()
     except Exception:
-        return jsonify(ok=False, error="bad input"), 200  # keep 200 so n8n doesn’t hard-fail
+        return jsonify(ok=False, error="bad input"), 200  
 
-    # sanity checks (align with n8n)
+   
     if not (3 <= length <= 200): return jsonify(ok=False, error="length_m out of range"), 200
     if not (1 <= beam <= 30):    return jsonify(ok=False, error="beam_m out of range"), 200
     if not (1 <= days <= 365):   return jsonify(ok=False, error="days out of range"), 200
@@ -170,7 +165,7 @@ def estimate():
     }
     return jsonify(ok=True, pricing=pricing), 200
 
-# Back-compat route (your original Dialogflow shape)
+
 @app.route('/get_quote', methods=['POST'])
 def get_quote_with_vessel_type():
     try:
@@ -202,5 +197,6 @@ def get_quote_with_vessel_type():
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 10000))
     app.run(debug=True, host='0.0.0.0', port=port)
+
 
 
